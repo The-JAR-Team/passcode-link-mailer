@@ -6,11 +6,11 @@ A simple Python library to send email confirmations via Gmail using App Password
 featuring a unique passcode and a timed confirmation link.
 """
 
-from .PasscodeLinkMailer import PasscodeLinkMailer
+from .passcode_link_mailer import PasscodeLinkMailer
 
 __version__ = "0.1.0"
 __author__ = "Jonatan Shaya"
-__email__ = "your.email@example.com"
+__email__ = "Jonatan.shaya99@gmail.com"
 
-# You can list what gets imported with a wildcard import, e.g., from simple_passcode_mailer import *
-# __all__ = ['PasscodeLinkMailer'] # Uncomment if you want to define __all__
+
+__all__ = ['PasscodeLinkMailer']

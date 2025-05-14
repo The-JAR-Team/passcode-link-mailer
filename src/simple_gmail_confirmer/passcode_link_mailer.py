@@ -6,7 +6,6 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 
-# Custom exceptions for the library
 class EmailSendingError(Exception):
     """Base exception for email sending failures in PasscodeLinkMailer."""
     pass
@@ -50,7 +49,6 @@ class PasscodeLinkMailer:
         if not sender_email or "@" not in sender_email:
             raise ValueError("A valid sender_email is required.")
         if not gmail_app_password:
-            # Consider raising ValueError for critical missing params instead of print
             raise ValueError("gmail_app_password is required and cannot be empty.")
 
         self.sender_email = sender_email
