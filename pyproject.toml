@@ -31,9 +31,6 @@ classifiers = [
 ]
 keywords = ["email", "gmail", "confirmation", "passcode", "mailer", "app password", "verification"]
 
-[project.license-files]
-paths = ["LICENSE"]
-
 [project.urls]
 "Homepage" = "https://github.com/The-JAR-Team/passcode-link-mailer"
 "Repository" = "https://github.com/The-JAR-Team/passcode-link-mailer"
