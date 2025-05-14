@@ -4,6 +4,8 @@ import threading
 import time
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import os  # For path operations
+from pathlib import Path  # For robust path handling
 
 
 class EmailSendingError(Exception):
@@ -25,10 +27,12 @@ class PasscodeLinkMailer:
     """
     A class to handle sending email confirmations with a unique passcode and a timed link,
     primarily designed for use with Gmail using an App Password.
+    It supports different email styling options loaded from external HTML files.
     """
 
     def __init__(self, sender_email: str, gmail_app_password: str, subject: str,
-                 message_body_template: str, valid_for_duration_seconds: int, confirmation_link_base: str):
+                 message_body_template: str, valid_for_duration_seconds: int, confirmation_link_base: str,
+                 email_style: str = 'standard', templates_dir: str = None):
         """
         Initializes the PasscodeLinkMailer service.
 
@@ -37,26 +41,42 @@ class PasscodeLinkMailer:
             gmail_app_password (str): The 16-character App Password generated from Gmail.
             subject (str): The subject line for the confirmation email. Can contain placeholders
                            like {recipient_email} or {passcode}.
-            message_body_template (str): The main content of the email before the confirmation link/button.
+            message_body_template (str): The main content of the email that you provide.
                                          You can use placeholders like {recipient_email}, {passcode},
-                                         and {validity_duration} which will be replaced.
+                                         {validity_duration}, and {full_confirmation_link}.
             valid_for_duration_seconds (int): How long the generated passcode and link should be
                                              considered valid, in seconds.
             confirmation_link_base (str): The base URL for the confirmation link.
-                                          The passcode will be appended like:
-                                          'http://yourdomain.com/confirm?passcode=GENERATED_PASSCODE'
+                                          The passcode will be appended as a query parameter.
+            email_style (str, optional): The style of the email template to use. Options are:
+                                        'standard' (default), 'minimal', or 'modern'.
+            templates_dir (str, optional): The directory where HTML email templates are stored.
+                                           If None, defaults to a 'templates' subdirectory
+                                           within the same directory as this file.
         """
         if not sender_email or "@" not in sender_email:
             raise ValueError("A valid sender_email is required.")
         if not gmail_app_password:
             raise ValueError("gmail_app_password is required and cannot be empty.")
 
+        valid_styles = ['standard', 'minimal', 'modern']
+        if email_style not in valid_styles:
+            raise ValueError(f"Invalid email_style. Choose from: {', '.join(valid_styles)}")
+
         self.sender_email = sender_email
         self.gmail_app_password = gmail_app_password
         self.subject_template = subject
-        self.message_body_template = message_body_template
+        self.message_body_template = message_body_template  # User's specific message part
         self.valid_for_duration_seconds = valid_for_duration_seconds
         self.confirmation_link_base = confirmation_link_base.rstrip('/')
+        self.email_style = email_style
+
+        if templates_dir is None:
+            # Default to a 'templates' subdirectory relative to this file's location
+            base_path = Path(__file__).parent
+            self.templates_dir = base_path / 'templates'
+        else:
+            self.templates_dir = Path(templates_dir)
 
         self.smtp_server = "smtp.gmail.com"
         self.smtp_port = 587
@@ -83,189 +103,53 @@ class PasscodeLinkMailer:
             return f"{hours} hour{'s' if hours != 1 else ''} and {remaining_minutes} minute{'s' if remaining_minutes != 1 else ''}"
         return f"{hours} hour{'s' if hours != 1 else ''}"
 
-    def _create_html_email_body(self, recipient_email: str, passcode: str, full_confirmation_link: str) -> str:
-        """Creates the HTML body for the confirmation email."""
-        validity_str = self._format_duration(self.valid_for_duration_seconds)
+    def _load_template(self, template_name: str) -> str:
+        """Loads an HTML template from the templates directory."""
+        template_file = self.templates_dir / template_name
+        try:
+            with open(template_file, 'r', encoding='utf-8') as f:
+                return f.read()
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                f"Email template '{template_file}' not found. Ensure it's in the templates directory and the directory is included in your package data.")
+        except Exception as e:
+            raise Exception(f"Error loading email template '{template_file}': {e}")
 
-        # Format the passcode with spaces for better readability
-        formatted_passcode = " ".join(passcode[i:i + 3] for i in range(0, len(passcode), 3))
+    def _create_html_email_body(self, recipient_email: str, passcode: str, full_confirmation_link: str) -> str:
+        """
+        Creates the HTML body for the confirmation email by loading a template
+        and formatting it with the necessary data.
+        """
+        validity_str = self._format_duration(self.valid_for_duration_seconds)
+        current_year = time.strftime('%Y')  # Still generated, but templates might not use it
 
         personalized_message_body = self.message_body_template.format(
             recipient_email=recipient_email,
-            passcode=formatted_passcode,
+            passcode=passcode,
             validity_duration=validity_str,
             full_confirmation_link=full_confirmation_link
         )
 
-        # Year for copyright footer
-        current_year = time.strftime('%Y')
+        if self.email_style == 'minimal':
+            template_filename = 'minimal_template.html'
+        elif self.email_style == 'modern':
+            template_filename = 'modern_template.html'
+        else:
+            template_filename = 'standard_template.html'
 
-        # Improved HTML styling for better deliverability and appearance
-        html_content = f"""
-        <!DOCTYPE html>
-        <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <meta name="color-scheme" content="light">
-                <meta name="supported-color-schemes" content="light">
-                <title>Email Confirmation</title>
-                <!--[if mso]>
-                <noscript>
-                    <xml>
-                        <o:OfficeDocumentSettings>
-                            <o:PixelsPerInch>96</o:PixelsPerInch>
-                        </o:OfficeDocumentSettings>
-                    </xml>
-                </noscript>
-                <![endif]-->
-                <style>
-                    /* Base styles */
-                    body, html {{
-                        margin: 0 auto !important;
-                        padding: 0 !important;
-                        height: 100% !important;
-                        width: 100% !important;
-                        font-family: Arial, Helvetica, sans-serif !important;
-                        font-size: 16px;
-                        line-height: 1.5;
-                        color: #444444;
-                    }}
-                    * {{
-                        -ms-text-size-adjust: 100%;
-                        -webkit-text-size-adjust: 100%;
-                    }}
-                    table, td {{
-                        mso-table-lspace: 0pt !important;
-                        mso-table-rspace: 0pt !important;
-                    }}
-                    table {{
-                        border-spacing: 0 !important;
-                        border-collapse: collapse !important;
-                        table-layout: fixed !important;
-                        margin: 0 auto !important;
-                    }}
-                    img {{
-                        -ms-interpolation-mode: bicubic;
-                        border: 0;
-                    }}
-                    a {{
-                        color: #0366d6;
-                        text-decoration: none;
-                    }}
-                    .button-td, .button-a {{
-                        transition: all 100ms ease-in;
-                    }}
-                    .button-td:hover, .button-a:hover {{
-                        background-color: #0056b3 !important;
-                        border-color: #0056b3 !important;
-                    }}
-                    /* Media Queries */
-                    @media screen and (max-width: 600px) {{
-                        .email-container {{
-                            width: 100% !important;
-                            max-width: 100% !important;
-                        }}
-                        .fluid {{
-                            max-width: 100% !important;
-                            height: auto !important;
-                            margin-left: auto !important;
-                            margin-right: auto !important;
-                        }}
-                    }}
-                </style>
-            </head>
-            <body width="100%" style="margin: 0; padding: 0 !important; background-color: #f5f7fa;">
-                <center role="article" aria-roledescription="email" lang="en" style="width: 100%; background-color: #f5f7fa;">
-                    <!--[if mso | IE]>
-                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f5f7fa;">
-                    <tr>
-                    <td>
-                    <![endif]-->
+        base_html_template = self._load_template(template_filename)
 
-                    <!-- Email Body -->
-                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: auto; background-color: #ffffff;" class="email-container">
-                        <!-- Header -->
-                        <tr>
-                            <td style="padding: 25px 0; text-align: center; background-color: #0366d6;">
-                                <h1 style="margin: 0; font-size: 24px; font-weight: normal; color: #ffffff;">Verify Your Email</h1>
-                            </td>
-                        </tr>
-
-                        <!-- Content -->
-                        <tr>
-                            <td style="padding: 30px; text-align: left;">
-                                {personalized_message_body}
-                            </td>
-                        </tr>
-
-                        <!-- Button -->
-                        <tr>
-                            <td style="padding: 0 30px 30px; text-align: center;">
-                                <!-- Button : BEGIN -->
-                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: auto;">
-                                    <tr>
-                                        <td style="border-radius: 4px; background-color: #0366d6; text-align: center;" class="button-td">
-                                            <a href="{full_confirmation_link}" style="background-color: #0366d6; border: 15px solid #0366d6; font-family: sans-serif; font-size: 16px; line-height: 1.1; text-align: center; text-decoration: none; display: block; border-radius: 4px; font-weight: 500; color: #ffffff !important;" class="button-a">
-                                                Confirm Email
-                                            </a>
-                                        </td>
-                                    </tr>
-                                </table>
-                                <!-- Button : END -->
-                            </td>
-                        </tr>
-
-                        <!-- Fallback Link -->
-                        <tr>
-                            <td style="padding: 0 30px 20px; text-align: center; color: #666666; font-size: 14px;">
-                                If the button doesn't work, copy and paste this link:
-                                <br>
-                                <a href="{full_confirmation_link}" style="color: #0366d6; word-break: break-all;">{full_confirmation_link}</a>
-                            </td>
-                        </tr>
-
-                        <!-- Passcode Box -->
-                        <tr>
-                            <td style="padding: 0 30px 30px;">
-                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa; border-left: 4px solid #0366d6; border-radius: 4px;">
-                                    <tr>
-                                        <td style="padding: 20px; text-align: left; font-size: 15px; color: #444444;">
-                                            <p style="margin: 0 0 10px 0;">Your confirmation code:</p>
-                                            <p style="margin: 0; font-size: 20px; font-weight: bold; letter-spacing: 1px; color: #0366d6; font-family: monospace;">{formatted_passcode}</p>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </td>
-                        </tr>
-
-                        <!-- Footer -->
-                        <tr>
-                            <td style="padding: 20px 30px; background-color: #f5f5f5; text-align: center; color: #777777; font-size: 13px; border-top: 1px solid #e5e5e5;">
-                                <p style="margin: 0 0 5px 0;">This link and code are valid for {validity_str}.</p>
-                                <p style="margin: 0 0 5px 0;">If you didn't request this email, please disregard it.</p>
-                                <p style="margin: 0;">&copy; {current_year} Your Company Name</p>
-                            </td>
-                        </tr>
-                    </table>
-                    <!--[if mso | IE]>
-                    </td>
-                    </tr>
-                    </table>
-                    <![endif]-->
-                </center>
-            </body>
-        </html>
-        """
-        return html_content
+        final_html = base_html_template.format(
+            personalized_message_body=personalized_message_body,
+            passcode=passcode,
+            full_confirmation_link=full_confirmation_link,
+            validity_str=validity_str,
+            current_year=current_year  # Pass it in case a template still uses it
+        )
+        return final_html
 
     def _send_email_worker(self, recipient_email: str, subject: str, html_body: str):
-        """
-        The actual worker function that sends the email.
-        Raises EmailSendingAuthError for authentication issues,
-        EmailSendingConnectionError for connection issues,
-        and EmailSendingError for other SMTP or general errors.
-        """
+        """The actual worker function that sends the email."""
         msg = MIMEMultipart('alternative')
         msg['From'] = self.sender_email
         msg['To'] = recipient_email
@@ -281,43 +165,24 @@ class PasscodeLinkMailer:
                 server.sendmail(self.sender_email, recipient_email, msg.as_string())
         except smtplib.SMTPAuthenticationError as e:
             error_message = f"SMTP Authentication Error for {self.sender_email}: {e}. Ensure App Password is correct and 2FA is enabled."
-            # print(error_message) # Optional: for direct library debugging
             raise EmailSendingAuthError(error_message) from e
         except smtplib.SMTPConnectError as e:
             error_message = f"SMTP Connection Error: Could not connect to {self.smtp_server}:{self.smtp_port}. {e}"
-            # print(error_message)
             raise EmailSendingConnectionError(error_message) from e
         except smtplib.SMTPServerDisconnected as e:
             error_message = f"SMTP Server Disconnected: {e}. This might be a temporary issue."
-            # print(error_message)
             raise EmailSendingConnectionError(error_message) from e
-        except smtplib.SMTPException as e:  # Catch other specific SMTP errors
+        except smtplib.SMTPException as e:
             error_message = f"An SMTP error occurred while sending email to {recipient_email}: {e}"
-            # print(error_message)
             raise EmailSendingError(error_message) from e
-        except Exception as e:  # Catch any other non-SMTP exceptions during the process
+        except Exception as e:
             error_message = f"An unexpected error occurred in _send_email_worker for {recipient_email}: {e}"
-            # print(error_message)
             raise EmailSendingError(error_message) from e
 
     def send(self, recipient_email: str, delay_seconds: int = 0) -> str:
         """
         Generates a passcode, prepares the confirmation email, and sends it
         after an optional delay using a daemon thread.
-
-        Args:
-            recipient_email (str): The email address to send the confirmation to.
-            delay_seconds (int, optional): Number of seconds to wait before sending the email.
-                                           If 0, sends immediately. Defaults to 0.
-
-        Returns:
-            str: The generated passcode that was sent (or will be sent) in the email.
-
-        Raises:
-            ValueError: If recipient_email is invalid.
-            EmailSendingAuthError: If SMTP authentication fails.
-            EmailSendingConnectionError: If there's an issue connecting to the SMTP server.
-            EmailSendingError: For other email sending related errors.
         """
         if not recipient_email or "@" not in recipient_email:
             raise ValueError("A valid recipient_email is required.")
@@ -328,14 +193,19 @@ class PasscodeLinkMailer:
         full_confirmation_link = f"{self.confirmation_link_base}{separator}passcode={passcode}"
 
         validity_str = self._format_duration(self.valid_for_duration_seconds)
-        format_kwargs = {
+
+        format_vars_for_subject = {
             'recipient_email': recipient_email,
             'passcode': passcode,
             'validity_duration': validity_str,
             'full_confirmation_link': full_confirmation_link
         }
 
-        final_subject = self.subject_template.format(**format_kwargs)
+        try:
+            final_subject = self.subject_template.format(**format_vars_for_subject)
+        except KeyError:
+            final_subject = self.subject_template
+
         html_body = self._create_html_email_body(recipient_email, passcode, full_confirmation_link)
 
         if delay_seconds > 0:
@@ -346,7 +216,7 @@ class PasscodeLinkMailer:
             )
             email_thread.start()
         else:
-            self._send_email_worker(recipient_email, final_subject, html_body)  # This can raise exceptions
+            self._send_email_worker(recipient_email, final_subject, html_body)
 
         return passcode
 
@@ -356,10 +226,6 @@ class PasscodeLinkMailer:
             time.sleep(delay_seconds)
             self._send_email_worker(recipient_email, subject, html_body)
         except EmailSendingError as e:
-            # Decide how to handle errors in a daemon thread.
-            # For now, just printing, as raising them here won't be caught by the main thread easily.
-            # A more robust solution might involve a callback or a queue for error reporting.
             print(f"Error sending email in delayed thread to {recipient_email}: {e}")
         except Exception as e:
             print(f"Unexpected error in delayed send thread for {recipient_email}: {e}")
-
