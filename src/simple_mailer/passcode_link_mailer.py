@@ -138,7 +138,6 @@ class PasscodeLinkMailer:
                             <h1>Confirmation Required</h1>
                         </div>
                         <div class="content">
-                            <p>Hello {recipient_email.split('@')[0]},</p>
                             {personalized_message_body}
                             <div class="button-container">
                                 <a href="{full_confirmation_link}" class="button">Confirm Your Email</a>
@@ -146,9 +145,6 @@ class PasscodeLinkMailer:
                             <div class="link-fallback">
                                 <p>If the button doesn't work, copy and paste this link into your browser:</p>
                                 <p><a href="{full_confirmation_link}">{full_confirmation_link}</a></p>
-                            </div>
-                            <div class="passcode-info">
-                                Your confirmation code is: <strong>{passcode}</strong>
                             </div>
                         </div>
                         <div class="footer">
