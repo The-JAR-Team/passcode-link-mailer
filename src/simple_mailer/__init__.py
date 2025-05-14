@@ -8,7 +8,7 @@ featuring a unique passcode and a timed confirmation link.
 
 from .passcode_link_mailer import PasscodeLinkMailer, EmailSendingError, EmailSendingAuthError, EmailSendingConnectionError
 
-__version__ = "0.1.4"
+__version__ = "0.1.5"
 __author__ = "Jonatan Shaya"
 __email__ = "Jonatan.shaya99@gmail.com"
 
