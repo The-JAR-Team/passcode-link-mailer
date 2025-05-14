@@ -87,73 +87,173 @@ class PasscodeLinkMailer:
         """Creates the HTML body for the confirmation email."""
         validity_str = self._format_duration(self.valid_for_duration_seconds)
 
+        # Format the passcode with spaces for better readability
+        formatted_passcode = " ".join(passcode[i:i + 3] for i in range(0, len(passcode), 3))
+
         personalized_message_body = self.message_body_template.format(
             recipient_email=recipient_email,
-            passcode=passcode,
+            passcode=formatted_passcode,
             validity_duration=validity_str,
             full_confirmation_link=full_confirmation_link
         )
 
-        # Enhanced HTML styling for a more professional look
+        # Year for copyright footer
+        current_year = time.strftime('%Y')
+
+        # Improved HTML styling for better deliverability and appearance
         html_content = f"""
-        <html>
+        <!DOCTYPE html>
+        <html lang="en">
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <meta name="color-scheme" content="light">
+                <meta name="supported-color-schemes" content="light">
+                <title>Email Confirmation</title>
+                <!--[if mso]>
+                <noscript>
+                    <xml>
+                        <o:OfficeDocumentSettings>
+                            <o:PixelsPerInch>96</o:PixelsPerInch>
+                        </o:OfficeDocumentSettings>
+                    </xml>
+                </noscript>
+                <![endif]-->
                 <style>
-                    body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; line-height: 1.6; color: #333333; margin: 0; padding: 0; background-color: #f4f7f6; }}
-                    .email-wrapper {{ width: 100%; background-color: #f4f7f6; padding: 20px 0; }}
-                    .email-container {{ max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); overflow: hidden; }}
-                    .header {{ text-align: center; padding: 30px 20px; background-color: #007bff; color: #ffffff; }}
-                    .header h1 {{ margin: 0; font-size: 24px; font-weight: 600; }}
-                    .content {{ padding: 30px 25px; }}
-                    .content p {{ margin-bottom: 18px; font-size: 16px; }}
-                    .button-container {{ text-align: center; margin: 30px 0; }}
-                    .button {{
-                        display: inline-block;
-                        padding: 14px 30px;
+                    /* Base styles */
+                    body, html {{
+                        margin: 0 auto !important;
+                        padding: 0 !important;
+                        height: 100% !important;
+                        width: 100% !important;
+                        font-family: Arial, Helvetica, sans-serif !important;
                         font-size: 16px;
-                        font-weight: 500;
-                        color: #ffffff !important;
-                        background-color: #007bff;
-                        text-decoration: none;
-                        border-radius: 5px;
-                        transition: background-color 0.2s ease-in-out, transform 0.1s ease;
+                        line-height: 1.5;
+                        color: #444444;
                     }}
-                    .button:hover {{ background-color: #0056b3; transform: translateY(-1px); }}
-                    .link-fallback {{ margin-top: 20px; text-align: center; font-size: 0.9em; }}
-                    .link-fallback p {{ margin-bottom: 5px; }}
-                    .link-fallback a {{ color: #007bff; text-decoration: none; }}
-                    .link-fallback a:hover {{ text-decoration: underline; }}
-                    .passcode-info {{ font-size: 0.95em; color: #444444; margin-top: 25px; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #007bff; border-radius: 4px; }}
-                    .passcode-info strong {{ color: #0056b3; }}
-                    .footer {{ font-size: 0.8em; color: #888888; margin-top: 30px; text-align: center; border-top: 1px solid #e0e0e0; padding: 20px 25px; }}
-                    .footer p {{ margin-bottom: 5px; }}
+                    * {{
+                        -ms-text-size-adjust: 100%;
+                        -webkit-text-size-adjust: 100%;
+                    }}
+                    table, td {{
+                        mso-table-lspace: 0pt !important;
+                        mso-table-rspace: 0pt !important;
+                    }}
+                    table {{
+                        border-spacing: 0 !important;
+                        border-collapse: collapse !important;
+                        table-layout: fixed !important;
+                        margin: 0 auto !important;
+                    }}
+                    img {{
+                        -ms-interpolation-mode: bicubic;
+                        border: 0;
+                    }}
+                    a {{
+                        color: #0366d6;
+                        text-decoration: none;
+                    }}
+                    .button-td, .button-a {{
+                        transition: all 100ms ease-in;
+                    }}
+                    .button-td:hover, .button-a:hover {{
+                        background-color: #0056b3 !important;
+                        border-color: #0056b3 !important;
+                    }}
+                    /* Media Queries */
+                    @media screen and (max-width: 600px) {{
+                        .email-container {{
+                            width: 100% !important;
+                            max-width: 100% !important;
+                        }}
+                        .fluid {{
+                            max-width: 100% !important;
+                            height: auto !important;
+                            margin-left: auto !important;
+                            margin-right: auto !important;
+                        }}
+                    }}
                 </style>
             </head>
-            <body>
-                <div class="email-wrapper">
-                    <div class="email-container">
-                        <div class="header">
-                            <h1>Confirmation Required</h1>
-                        </div>
-                        <div class="content">
-                            {personalized_message_body}
-                            <div class="button-container">
-                                <a href="{full_confirmation_link}" class="button">Confirm Your Email</a>
-                            </div>
-                            <div class="link-fallback">
-                                <p>If the button doesn't work, copy and paste this link into your browser:</p>
-                                <p><a href="{full_confirmation_link}">{full_confirmation_link}</a></p>
-                            </div>
-                        </div>
-                        <div class="footer">
-                            <p>This link and code are valid for {validity_str}.</p>
-                            <p>If you did not request this, please ignore this email.</p>
-                            <p>&copy; {time.strftime('%Y')} Your Application Name</p>
-                        </div>
-                    </div>
-                </div>
+            <body width="100%" style="margin: 0; padding: 0 !important; background-color: #f5f7fa;">
+                <center role="article" aria-roledescription="email" lang="en" style="width: 100%; background-color: #f5f7fa;">
+                    <!--[if mso | IE]>
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f5f7fa;">
+                    <tr>
+                    <td>
+                    <![endif]-->
+
+                    <!-- Email Body -->
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: auto; background-color: #ffffff;" class="email-container">
+                        <!-- Header -->
+                        <tr>
+                            <td style="padding: 25px 0; text-align: center; background-color: #0366d6;">
+                                <h1 style="margin: 0; font-size: 24px; font-weight: normal; color: #ffffff;">Verify Your Email</h1>
+                            </td>
+                        </tr>
+
+                        <!-- Content -->
+                        <tr>
+                            <td style="padding: 30px; text-align: left;">
+                                {personalized_message_body}
+                            </td>
+                        </tr>
+
+                        <!-- Button -->
+                        <tr>
+                            <td style="padding: 0 30px 30px; text-align: center;">
+                                <!-- Button : BEGIN -->
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: auto;">
+                                    <tr>
+                                        <td style="border-radius: 4px; background-color: #0366d6; text-align: center;" class="button-td">
+                                            <a href="{full_confirmation_link}" style="background-color: #0366d6; border: 15px solid #0366d6; font-family: sans-serif; font-size: 16px; line-height: 1.1; text-align: center; text-decoration: none; display: block; border-radius: 4px; font-weight: 500; color: #ffffff !important;" class="button-a">
+                                                Confirm Email
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </table>
+                                <!-- Button : END -->
+                            </td>
+                        </tr>
+
+                        <!-- Fallback Link -->
+                        <tr>
+                            <td style="padding: 0 30px 20px; text-align: center; color: #666666; font-size: 14px;">
+                                If the button doesn't work, copy and paste this link:
+                                <br>
+                                <a href="{full_confirmation_link}" style="color: #0366d6; word-break: break-all;">{full_confirmation_link}</a>
+                            </td>
+                        </tr>
+
+                        <!-- Passcode Box -->
+                        <tr>
+                            <td style="padding: 0 30px 30px;">
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa; border-left: 4px solid #0366d6; border-radius: 4px;">
+                                    <tr>
+                                        <td style="padding: 20px; text-align: left; font-size: 15px; color: #444444;">
+                                            <p style="margin: 0 0 10px 0;">Your confirmation code:</p>
+                                            <p style="margin: 0; font-size: 20px; font-weight: bold; letter-spacing: 1px; color: #0366d6; font-family: monospace;">{formatted_passcode}</p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+
+                        <!-- Footer -->
+                        <tr>
+                            <td style="padding: 20px 30px; background-color: #f5f5f5; text-align: center; color: #777777; font-size: 13px; border-top: 1px solid #e5e5e5;">
+                                <p style="margin: 0 0 5px 0;">This link and code are valid for {validity_str}.</p>
+                                <p style="margin: 0 0 5px 0;">If you didn't request this email, please disregard it.</p>
+                                <p style="margin: 0;">&copy; {current_year} Your Company Name</p>
+                            </td>
+                        </tr>
+                    </table>
+                    <!--[if mso | IE]>
+                    </td>
+                    </tr>
+                    </table>
+                    <![endif]-->
+                </center>
             </body>
         </html>
         """
