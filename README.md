@@ -16,7 +16,8 @@
 
 * ✅ **Gmail Focused:** Designed specifically for use with Gmail and Google App Passwords
 * 🔑 **Secure Passcodes:** Leverages Python's `secrets` module to generate cryptographically strong, URL-safe passcodes
-* 🎨 **Customizable HTML Emails:** Includes a clean, responsive default HTML template with easy-to-use placeholders
+* 🎨 **Multiple Email Styles:** Choose from three professional email templates - standard, minimal, or modern
+* 📂 **Template-Based Design:** Email templates are stored as HTML files for easy customization and maintenance
 * ⏱️ **Customizable Validity Duration:** Allows you to specify how long the passcode should remain valid and displays this information to users
 * ⏳ **Optional Delayed Sending:** Choose to send emails immediately or after a specified delay using a background thread
 * 🐍 **Pure Python:** Built entirely with Python standard libraries - no external dependencies to manage
@@ -24,22 +25,19 @@
 
 ## 🖼️ What the Email Looks Like
 
-The library sends a responsive HTML email that is highly customizable for your needs, an example:
+The library offers multiple email template styles. Here's an example of the standard style:
 
-![Example Email Screenshot](https://github.com/user-attachments/assets/c631e915-a6ed-4978-afa3-bac8531d20f3)
+![image](https://github.com/user-attachments/assets/18a0ac21-1337-47d3-aa91-df2a9c1fb787)
 
-The email features:
+Features across all template styles include:
 
-* **Subject:** "Test: Your Confirmation Code for MyApp"
-* **Blue Header:** A prominent blue header reading "Confirmation Required" at the top
-* **Personalized Greeting:** Two greeting lines addressing the recipient: "Hello the.jar.team2025+mee" and "Hello the.jar.team2025+mee@gmail.com"
-* **Message Body:** Text stating "This is a test email from PasscodeLinkMailer. Your code is UqcnqZJhCA7R51y-2wDMWBNYZSRP59Nh."
-* **Validity Info:** "This link is valid for 10 minutes."
-* **Confirmation Link:** Shows the full URL with the passcode
-* **Call to Action Button:** A blue button labeled "Confirm Your Email"
-* **Fallback Text:** "If the button doesn't work, copy and paste this link into your browser:" with the link below
-* **Highlighted Passcode Box:** A blue-bordered section stating "Your confirmation code is: UqcnqZJhCA7R51y-2wDMWBNYZSRP59Nh"
-* **Footer:** Contains validity information, opt-out message, and copyright info
+* **Professional Header:** A clean header that establishes the purpose of the email
+* **Personalized Content:** Your custom message is prominently displayed
+* **Clear Call to Action:** A prominent button for confirming the email 
+* **Fallback Link:** A text link in case the button doesn't work
+* **Highlighted Passcode:** The confirmation code is clearly displayed in a styled box
+* **Validity Information:** Users are informed how long their code remains valid
+* **Responsive Design:** All templates are mobile-friendly and render well across devices
 
 ## ⚙️ Installation
 
@@ -67,6 +65,46 @@ To use this library, your Gmail account must be configured with an App Password.
 6. Click "Generate"
 7. Google will display a 16-character App Password (typically in a yellow bar). Copy this password (without spaces). This is the password you will use for the `gmail_app_password` parameter when initializing the mailer. Store this App Password securely, as Google will not show it to you again
 
+## 🎨 Email Styles and Templates
+
+The library now supports three distinct email styles, all professionally designed to help emails avoid spam filters:
+
+1. **Standard (Default)**: A clean, professional design with a blue header and structured layout
+2. **Minimal**: A simpler, lighter design for a more understated approach
+3. **Modern**: A contemporary design with more visual elements and a card-based layout
+
+To specify which style you want to use:
+
+```python
+# Using the default (standard) style
+mailer = PasscodeLinkMailer(
+    # ... other parameters
+)
+
+# Using the minimal style
+mailer = PasscodeLinkMailer(
+    # ... other parameters
+    email_style='minimal'
+)
+
+# Using the modern style
+mailer = PasscodeLinkMailer(
+    # ... other parameters
+    email_style='modern'
+)
+```
+
+### Custom Template Directory
+
+By default, templates are loaded from a `templates` directory relative to the module's location. You can specify a custom template directory if needed:
+
+```python
+mailer = PasscodeLinkMailer(
+    # ... other parameters
+    templates_dir='/path/to/your/custom/templates'
+)
+```
+
 ## ⏱️ Time Validity
 
 The `valid_for_duration_seconds` parameter:
@@ -91,15 +129,17 @@ You can use the following placeholders in your subject and message_body_template
 
 ## 🛠️ How It Works
 
-1. **Initialization:** You initialize PasscodeLinkMailer with your Gmail credentials (sender email and App Password), email content templates, the desired validity duration for the confirmation link, and your application's base URL for the confirmation endpoint.
+1. **Initialization:** You initialize PasscodeLinkMailer with your Gmail credentials (sender email and App Password), email content templates, the desired validity duration for the confirmation link, your application's base URL for the confirmation endpoint, and optionally specify the email style.
 
-2. **Sending a Request:** When you call the `send()` method with a recipient's email address:
-   - A unique, secure passcode is generated using `secrets.token_urlsafe()` (like `UqcnqZJhCA7R51y-2wDMWBNYZSRP59Nh` in the example)
+2. **Template Loading:** The library loads the appropriate HTML template file based on your chosen style from the templates directory.
+
+3. **Sending a Request:** When you call the `send()` method with a recipient's email address:
+   - A unique, secure passcode is generated using `secrets.token_urlsafe()`
    - The full confirmation link is constructed by appending `?passcode=THE_GENERATED_PASSCODE` to your specified base URL
-   - The HTML email body is created by formatting your message_body_template with the recipient's details, the generated passcode, the validity duration string, and the full confirmation link
+   - The HTML email body is created by formatting the loaded template with your personalized message, the recipient's details, passcode, validity duration, and the confirmation link
    - The email is then sent via Gmail's SMTP server using Python's smtplib, ensuring a secure TLS connection
 
-3. **Passcode Return:** The `send()` method returns the generated passcode. Your application should:
+4. **Passcode Return:** The `send()` method returns the generated passcode. Your application should:
    - Store this passcode securely (e.g., in your database), associating it with the user and recording when it was created
    - Set up your own server-side expiration logic based on the `valid_for_duration_seconds` parameter you provided
    - When the user clicks the confirmation link in the email, your application's backend endpoint receives the passcode as a query parameter
@@ -131,7 +171,7 @@ GMAIL_APP_PASSWORD = "yoursixteenletterapppassword"    # Your 16-character Gmail
 YOUR_APP_CONFIRM_URL_BASE = "https://mytestapp.com/confirm"  # Base URL for your app's confirmation endpoint
 
 try:
-    # Initialize the mailer
+    # Initialize the mailer with the modern style
     mailer = PasscodeLinkMailer(
         sender_email=SENDER_GMAIL_ADDRESS,
         gmail_app_password=GMAIL_APP_PASSWORD,
@@ -143,7 +183,8 @@ try:
             "<p>Confirmation link: {full_confirmation_link}</p>"
         ),
         valid_for_duration_seconds=600,  # 10 minutes
-        confirmation_link_base=YOUR_APP_CONFIRM_URL_BASE
+        confirmation_link_base=YOUR_APP_CONFIRM_URL_BASE,
+        email_style='modern'  # Try 'standard', 'minimal', or 'modern'
     )
     print("PasscodeLinkMailer initialized successfully.")
 
@@ -221,65 +262,40 @@ if __name__ == "__main__":
     print(f"Attempting to initialize PasscodeLinkMailer with sender: {SENDER_GMAIL_ADDRESS}")
 
     try:
-        mailer = PasscodeLinkMailer(
-            sender_email=SENDER_GMAIL_ADDRESS,
-            gmail_app_password=GMAIL_APP_PASSWORD,
-            subject="Test: Your Confirmation Code for MyApp",
-            message_body_template="<p>Hello {recipient_email},</p>\
-            <p>This is a test email from PasscodeLinkMailer. Your code is {passcode}.</p><p>This link is valid for {validity_duration}.</p><p>Confirmation link: {full_confirmation_link}</p>",
-            valid_for_duration_seconds=600,  # 10 minutes for testing
-            confirmation_link_base="https://mytestapp.com/confirm"
-        )
-        print("PasscodeLinkMailer initialized successfully.")
-
-        # --- Test Case 1: Send immediately ---
-        print(f"\n--- Test Case 1: Sending immediate email to {TEST_RECIPIENT_EMAIL} ---")
-        try:
-            immediate_passcode = mailer.send(recipient_email=TEST_RECIPIENT_EMAIL, delay_seconds=0)
-            print(f"Immediate email request sent. Passcode generated: {immediate_passcode}")
-            print(f"Check {TEST_RECIPIENT_EMAIL} for the email (subject: Test: Your Confirmation Code for MyApp).")
-        except EmailSendingAuthError as e_auth:
-            print(f"Authentication Error for immediate send: {e_auth}")
-        except EmailSendingConnectionError as e_conn:
-            print(f"Connection Error for immediate send: {e_conn}")
-        except EmailSendingError as e_send:
-            print(f"General Sending Error for immediate send: {e_send}")
-        except ValueError as ve:
-            print(f"ValueError for immediate send: {ve}")
-        except Exception as e:
-            print(f"An unexpected error occurred during immediate send: {e}")
-
-        # Give Gmail some time if sending multiple emails quickly
-        print("\nWaiting for 10 seconds before next test...")
-        time.sleep(10)
-
-        # --- Test Case 2: Send with a delay ---
-        print(f"\n--- Test Case 2: Sending email to {TEST_RECIPIENT_EMAIL} with a 5-second delay ---")
-        try:
-            delayed_passcode = mailer.send(recipient_email=TEST_RECIPIENT_EMAIL, delay_seconds=5)
-            print(f"Delayed email request initiated. Passcode generated: {delayed_passcode}")
-            print("Email will be sent by a background thread in approximately 5 seconds.")
-            print("Main script will wait for 15 seconds to allow the thread to complete.")
+        # Try each of the available styles
+        for style in ['standard', 'minimal', 'modern']:
+            print(f"\n--- Testing with {style.upper()} email style ---")
             
-            # Keep the main thread alive for longer than the delay to see the result
-            # (or for the thread to at least attempt sending)
-            time.sleep(15) 
-            print(f"Check {TEST_RECIPIENT_EMAIL} for the delayed email.")
+            mailer = PasscodeLinkMailer(
+                sender_email=SENDER_GMAIL_ADDRESS,
+                gmail_app_password=GMAIL_APP_PASSWORD,
+                subject=f"Test: {style.capitalize()} Style Email from PasscodeLinkMailer",
+                message_body_template="<p>Hello {recipient_email},</p>\
+                <p>This is a test email using the <strong>{style}</strong> template style.</p>\
+                <p>Your code is {passcode}.</p>\
+                <p>This link is valid for {validity_duration}.</p>",
+                valid_for_duration_seconds=600,  # 10 minutes for testing
+                confirmation_link_base="https://mytestapp.com/confirm",
+                email_style=style
+            )
+            print(f"{style.capitalize()} style mailer initialized successfully.")
 
-        except EmailSendingAuthError as e_auth: # This won't be caught here if error is in thread
-            print(f"Authentication Error for delayed send (initial call): {e_auth}")
-        except EmailSendingConnectionError as e_conn: # Same as above
-            print(f"Connection Error for delayed send (initial call): {e_conn}")
-        except EmailSendingError as e_send: # Same as above
-            print(f"General Sending Error for delayed send (initial call): {e_send}")
-        except ValueError as ve:
-            print(f"ValueError for delayed send: {ve}")
-        except Exception as e:
-            print(f"An unexpected error occurred during delayed send initiation: {e}")
-        
+            # Send test email with this style
+            try:
+                passcode = mailer.send(recipient_email=TEST_RECIPIENT_EMAIL, delay_seconds=0)
+                print(f"{style.capitalize()} email sent. Passcode: {passcode}")
+                print(f"Check {TEST_RECIPIENT_EMAIL} for the email.")
+                
+                # Wait between emails to avoid Gmail rate limiting
+                if style != 'modern':  # Don't wait after the last one
+                    print("Waiting 10 seconds before next test...")
+                    time.sleep(10)
+                    
+            except Exception as e_send:
+                print(f"Error sending {style} email: {e_send}")
+
         print("\n--- Test Script Finished ---")
-        print("Remember that errors in the delayed send thread might only print to console")
-        print("from the thread itself, depending on its error handling.")
+        print(f"Check {TEST_RECIPIENT_EMAIL} for all three email styles!")
 
     except ValueError as ve_init:
         print(f"Initialization Error: {ve_init}")
