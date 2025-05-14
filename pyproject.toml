@@ -1,0 +1,56 @@
+# pyproject.toml
+
+[build-system]
+requires = ["setuptools>=61.0"] # Specifies that setuptools is needed to build
+build-backend = "setuptools.build_meta"
+# backend-path = ["."] # Usually not needed if setuptools is in requires
+
+[project]
+name = "simple-passcode-mailer" # The name on PyPI (must be unique!)
+version = "0.1.0" # Your library's version, sync with __init__.py
+authors = [
+    # Replace "Your Actual Name" and "your.actual.email@example.com"
+    # with your real information.
+    { name="Your Actual Name", email="your.actual.email@example.com" },
+]
+description = "A simple Python library to send email confirmations via Gmail using App Passwords, featuring a unique passcode and a timed link."
+readme = "README.md" # Points to your README file
+requires-python = ">=3.7" # Minimum Python version your library supports
+license = { file = "LICENSE" } # Points to your LICENSE file (e.g., LICENSE.txt or LICENSE)
+classifiers = [
+    "Development Status :: 3 - Alpha", # Or "4 - Beta", "5 - Production/Stable"
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License", # Choose your license
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Communications :: Email",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Utilities",
+]
+keywords = ["email", "gmail", "confirmation", "passcode", "mailer", "app password", "verification"]
+
+# Add dependencies if your library directly depends on other PyPI packages
+# For this library, all imports (smtplib, secrets, threading, time, email.mime) are part of the Python standard library.
+# dependencies = [
+#   # "requests>=2.20.0", # Example if you used the requests library
+# ]
+
+[project.urls] # Optional: Links to your project
+"Homepage" = "https://github.com/yourusername/simple-passcode-mailer" # Crucial: Link to your GitHub repo
+"Repository" = "https://github.com/yourusername/simple-passcode-mailer" # Often good to have this explicit too
+"Bug Tracker" = "https://github.com/yourusername/simple-passcode-mailer/issues" # Replace
+# "Documentation" = "https://your-docs-url.com" # If you add separate docs
+
+# If using src layout, tell setuptools where to find the package
+[tool.setuptools.packages.find]
+where = ["src"] # Look for packages in the 'src' directory
+
+# Example for entry points if you were creating a command-line script
+# [project.scripts]
+# my-script = "simple_passcode_mailer.cli:main_function"
