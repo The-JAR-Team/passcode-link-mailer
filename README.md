@@ -20,14 +20,16 @@
 You can install `simple-passcode-mailer` directly from PyPI:
 
 ```bash
-pip install simple-passcode-mailer
+pip install passcode-link-mailer
 (Make sure the package name matches the one you successfully publish on PyPI.)Prerequisites for GmailTo use this library with your Gmail account, you must configure it to use an App Password:Enable 2-Step Verification on the Google Account you intend to send emails from. If it's not enabled, you won't be able to generate App Passwords.Generate an App Password:Go to your Google Account: https://myaccount.google.com/Navigate to the "Security" section.Under "How you sign in to Google," find and click on "App passwords." You might need to sign in again.If you don’t see this option, 2-Step Verification might not be set up correctly, or your account type/organization might restrict it.At the bottom, choose "Select app" and pick "Mail."Choose "Select device" and pick "Other (Custom name)." Give it a descriptive name like "My Python Confirmation App."Click "Generate."The App Password is the 16-character code displayed in the yellow bar. Copy this password (without spaces). This is what you'll use as the gmail_app_password when initializing the mailer. Keep it secure.Usage ExampleHere's how to use PasscodeLinkMailer to send a confirmation email:from simple_passcode_mailer import (
     PasscodeLinkMailer,
     EmailSendingAuthError,
     EmailSendingConnectionError,
     EmailSendingError
 )
+
 import time # For the example if testing delayed send
+from simple_mailer import PasscodeLinkMailer
 
 # --- Configuration ---
 # IMPORTANT: Replace with your actual credentials and application details.
