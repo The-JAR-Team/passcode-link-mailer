@@ -2,8 +2,11 @@ import smtplib
 import secrets
 import threading
 import time
+import uuid
+import socket
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.utils import formatdate, formataddr, make_msgid
 import os  # For path operations
 from pathlib import Path  # For robust path handling
 
@@ -32,6 +35,7 @@ class PasscodeLinkMailer:
 
     def __init__(self, sender_email: str, gmail_app_password: str, subject: str,
                  message_body_template: str, valid_for_duration_seconds: int, confirmation_link_base: str,
+                 sender_name: str = None, reply_to: str = None,
                  email_style: str = 'standard', templates_dir: str = None):
         """
         Initializes the PasscodeLinkMailer service.
@@ -48,6 +52,8 @@ class PasscodeLinkMailer:
                                              considered valid, in seconds.
             confirmation_link_base (str): The base URL for the confirmation link.
                                           The passcode will be appended as a query parameter.
+            sender_name (str, optional): The display name of the sender. If None, uses the email address.
+            reply_to (str, optional): Reply-to email address. If None, uses sender_email.
             email_style (str, optional): The style of the email template to use. Options are:
                                         'standard' (default), 'minimal', or 'modern'.
             templates_dir (str, optional): The directory where HTML email templates are stored.
@@ -64,6 +70,8 @@ class PasscodeLinkMailer:
             raise ValueError(f"Invalid email_style. Choose from: {', '.join(valid_styles)}")
 
         self.sender_email = sender_email
+        self.sender_name = sender_name or sender_email.split('@')[0]  # Default to username part of email
+        self.reply_to = reply_to or sender_email
         self.gmail_app_password = gmail_app_password
         self.subject_template = subject
         self.message_body_template = message_body_template  # User's specific message part
@@ -148,12 +156,56 @@ class PasscodeLinkMailer:
         )
         return final_html
 
+    def _create_text_version(self, recipient_email: str, passcode: str, full_confirmation_link: str) -> str:
+        """Creates a plain text version of the email content for better deliverability."""
+        validity_str = self._format_duration(self.valid_for_duration_seconds)
+
+        # Start with the user's message content, but strip any HTML
+        # This is a simple approach - for more complex HTML, consider using a HTML->text converter
+        text_content = self.message_body_template.format(
+            recipient_email=recipient_email,
+            passcode=passcode,
+            validity_duration=validity_str,
+            full_confirmation_link=full_confirmation_link
+        )
+
+        # Replace some common HTML elements with plain text
+        text_content = text_content.replace('<p>', '').replace('</p>', '\n\n')
+        text_content = text_content.replace('<br>', '\n').replace('<br/>', '\n').replace('<br />', '\n')
+        text_content = text_content.replace('&nbsp;', ' ')
+
+        # Strip any remaining HTML tags (simple approach)
+        import re
+        text_content = re.sub('<[^<]+?>', '', text_content)
+
+        # Add the confirmation link and passcode information
+        text_content += f"\n\nPlease confirm your email by visiting: {full_confirmation_link}\n\n"
+        text_content += f"Your confirmation code: {passcode}\n\n"
+        text_content += f"This link and code are valid for {validity_str}.\n"
+        text_content += "If you didn't request this email, please disregard it."
+
+        return text_content
+
     def _send_email_worker(self, recipient_email: str, subject: str, html_body: str):
-        """The actual worker function that sends the email."""
+        """The actual worker function that sends the email with improved deliverability."""
         msg = MIMEMultipart('alternative')
-        msg['From'] = self.sender_email
+
+        # Essential headers to reduce spam likelihood
+        msg['From'] = formataddr((self.sender_name, self.sender_email))
         msg['To'] = recipient_email
+        msg['Reply-To'] = self.reply_to
         msg['Subject'] = subject
+        msg['Date'] = formatdate(localtime=True)
+        msg['Message-ID'] = make_msgid(domain=self.sender_email.split('@')[1])
+
+        # Optional headers that can help with deliverability
+        msg['X-Mailer'] = 'PasscodeLinkMailer Python Library'
+
+        # Create a plain text version for better deliverability
+        text_content = self._create_text_version(recipient_email, "", "")  # Placeholders - these aren't used directly
+
+        # Add both plain text and HTML versions
+        msg.attach(MIMEText(text_content, 'plain'))
         msg.attach(MIMEText(html_body, 'html'))
 
         try:
