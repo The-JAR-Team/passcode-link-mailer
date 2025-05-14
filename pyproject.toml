@@ -13,11 +13,10 @@ authors = [
 description = "A simple Python library to send email confirmations via Gmail using App Passwords, featuring a unique passcode and a provided link."
 readme = "README.md"
 requires-python = ">=3.7"
-license = { file = "LICENSE" }
+license = "MIT"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.7",
@@ -32,11 +31,13 @@ classifiers = [
 ]
 keywords = ["email", "gmail", "confirmation", "passcode", "mailer", "app password", "verification"]
 
+[project.license-files]
+paths = ["LICENSE"]
+
 [project.urls]
 "Homepage" = "https://github.com/The-JAR-Team/passcode-link-mailer"
 "Repository" = "https://github.com/The-JAR-Team/passcode-link-mailer"
 "Bug Tracker" = "https://github.com/The-JAR-Team/passcode-link-mailer/issues"
-
 
 [tool.setuptools.packages.find]
 where = ["src"]
