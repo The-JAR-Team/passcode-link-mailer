@@ -39,13 +39,13 @@ YOUR_APP_CONFIRM_URL_BASE = "[https://yourapp.com/auth/confirm_email](https://yo
 try:
     # Initialize the mailer
     mailer = PasscodeLinkMailer(
-        sender_email=SENDER_GMAIL_ADDRESS,
-        gmail_app_password=GMAIL_APP_PASSWORD,
-        subject="Confirm Your Email for AwesomeApp!",
-        message_body_template="<p>Welcome to AwesomeApp, {recipient_email}!</p><p>Please click the button below or use the link to confirm your email address. Your confirmation code is <strong>{passcode}</strong>.</p><p>This code and link will expire in {validity_duration}.</p>",
-        valid_for_duration_seconds=3600,  # e.g., 1 hour
-        confirmation_link_base=YOUR_APP_CONFIRM_URL_BASE
-    )
+            sender_email=SENDER_GMAIL_ADDRESS,
+            gmail_app_password=GMAIL_APP_PASSWORD,
+            subject="Test: Your Confirmation Code for MyApp",
+            message_body_template="<p>Hello {recipient_email},</p><p>This is a test email from PasscodeLinkMailer. Your code is {passcode}.</p><p>This link is valid for {validity_duration}.</p><p>Confirmation link: {full_confirmation_link}</p>",
+            valid_for_duration_seconds=600,  # 10 minutes for testing
+            confirmation_link_base="https://mytestapp.com/confirm"
+        )
 
     recipient_to_confirm = "new_user@example.com"
 
