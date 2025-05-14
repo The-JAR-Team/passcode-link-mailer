@@ -32,9 +32,9 @@ import time # For the example if testing delayed send
 # --- Configuration ---
 # IMPORTANT: Replace with your actual credentials and application details.
 # It's recommended to load sensitive credentials from environment variables or a secure config.
-SENDER_GMAIL_ADDRESS = "your_sending_email@gmail.com"  # Your Gmail address
+SENDER_GMAIL_ADDRESS = "the.jar.team2025@gmail.com"  # Your Gmail address
 GMAIL_APP_PASSWORD = "abcd efgh ijkl mnop"    # Your 16-character Gmail App Password (no spaces)
-TEST_RECIPIENT_EMAIL = "recipient_test_email@example.com" # Email address to send the test to
+TEST_RECIPIENT_EMAIL = "the.jar.team2025+mee@gmail.com" # Email address to send the test to, if you didnt know you can use + in mails and they act as tags in mails
 
 try:
     # Initialize the mailer
