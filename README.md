@@ -34,7 +34,7 @@ import time # For the example if testing delayed send
 # It's recommended to load sensitive credentials from environment variables or a secure config.
 SENDER_GMAIL_ADDRESS = "your_sending_email@gmail.com"  # Your Gmail address
 GMAIL_APP_PASSWORD = "abcd efgh ijkl mnop"    # Your 16-character Gmail App Password (no spaces)
-YOUR_APP_CONFIRM_URL_BASE = "[https://yourapp.com/auth/confirm_email](https://yourapp.com/auth/confirm_email)" # Base URL for your confirmation endpoint
+TEST_RECIPIENT_EMAIL = "recipient_test_email@example.com" # Email address to send the test to
 
 try:
     # Initialize the mailer
