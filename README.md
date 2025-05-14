@@ -1,6 +1,9 @@
 # Simple Passcode Mailer
 
-[![PyPI version](https://badge.fury.io/py/simple-passcode-mailer.svg)](https://badge.fury.io/py/simple-passcode-mailer) A straightforward Python library to send email confirmations via Gmail using **App Passwords**. It generates a unique passcode, embeds it in a customizable HTML email template with a confirmation link, and handles sending the email. Ideal for simple email verification flows where you want to manage the email sending process directly.
+[![PyPI version](https://badge.fury.io/py/simple-passcode-mailer.svg)](https://badge.fury.io/py/simple-passcode-mailer) 
+A straightforward Python library to send email confirmations via Gmail using **App Passwords**. 
+It generates a unique passcode, embeds it in a customizable HTML email template with a confirmation link, and handles sending the email. 
+Ideal for simple email verification flows where you want to manage the email sending process directly.
 
 ## Key Features
 
