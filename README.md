@@ -74,5 +74,6 @@ except EmailSendingError as send_err:
     print(f"Email Sending Error: {send_err}")
 except Exception as e:
     print(f"An unexpected error occurred: {e}")
+```
 
 ![image](https://github.com/user-attachments/assets/d2bed1e8-c531-4d2e-ac23-ad2b0431bb74)
